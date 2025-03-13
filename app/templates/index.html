@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Articles - Tamil Kids News Service{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h1 class="display-5">News Articles for Review</h1>
+        <p class="lead">Review and approve articles for the podcast.</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <div class="card bg-light">
+            <div class="card-body">
+                <h5 class="card-title">Status</h5>
+                <p class="card-text">Total Articles: <span class="badge bg-primary">{{ total }}</span></p>
+                <p class="card-text">Approved: <span class="badge bg-success">{{ approved }}</span></p>
+                <p class="card-text">Pending: <span class="badge bg-warning">{{ total - approved }}</span></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if articles %}
+    <div class="row">
+        {% for article in articles %}
+        <div class="col-md-6">
+            <div class="card article-card">
+                {% if article.get('approved') == True %}
+                    <div class="status-badge">
+                        <span class="badge bg-success">Approved</span>
+                    </div>
+                {% elif article.get('approved') == False %}
+                    <div class="status-badge">
+                        <span class="badge bg-danger">Rejected</span>
+                    </div>
+                {% endif %}
+
+                <div class="card-body">
+                    <h5 class="card-title tamil-text">{{ article.tamil_title }}</h5>
+                    <h6 class="card-subtitle mb-2 text-muted">{{ article.original_title }}</h6>
+
+                    <p class="card-text tamil-text">
+                        {% if article.tamil_summary %}
+                            {{ article.tamil_summary[:150] }}{% if article.tamil_summary|length > 150 %}...{% endif %}
+                        {% else %}
+                            <em>No summary available</em>
+                        {% endif %}
+                    </p>
+
+                    <div class="d-flex justify-content-between mt-3">
+                        <div>
+                            <a href="{{ url_for('view_article', article_id=loop.index0) }}" class="btn btn-primary btn-sm">View</a>
+                            <a href="{{ url_for('edit_article', article_id=loop.index0) }}" class="btn btn-outline-primary btn-sm">Edit</a>
+                        </div>
+                        <div>
+                            <button 
+                                onclick="approveArticle({{ loop.index0 }})" 
+                                class="btn btn-success btn-sm"
+                                {% if article.get('approved') == True %}disabled{% endif %}
+                            >
+                                Approve
+                            </button>
+                            <button 
+                                onclick="rejectArticle({{ loop.index0 }})" 
+                                class="btn btn-danger btn-sm"
+                                {% if article.get('approved') == False %}disabled{% endif %}
+                            >
+                                Reject
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-muted">
+                    <small>
+                        From: {{ article.link|urlize }} <br>
+                        Published: {{ article.published.split('T')[0] }}
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="alert alert-warning">
+        <p>No articles found. Run the scraper to get new articles.</p>
+        <a href="{{ url_for('run_scraper') }}" class="btn btn-primary">Run Scraper</a>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function approveArticle(articleId) {
+        fetch(`/approve/${articleId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while approving the article');
+        });
+    }
+
+    function rejectArticle(articleId) {
+        fetch(`/reject/${articleId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while rejecting the article');
+        });
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+
+{% block title %}Run Scraper - Tamil Kids News Service{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">News Scraper</h1>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Run News Scraper</h5>
+        <p class="card-text">
+            Run the news scraper to fetch and process new articles from RSS feeds.
+            This will fetch articles, detect their language, and translate non-Tamil content to Tamil.
+        </p>
+        <div class="alert alert-info">
+            <strong>Note:</strong> This process may take a few moments to complete depending on the number of articles.
+        </div>
+        <button id="runScraperBtn" class="btn btn-primary">Run Scraper</button>
+    </div>
+</div>
+
+<div id="resultAlert" class="alert alert-success mt-4 d-none">
+    <strong>Success!</strong> The scraper has run successfully. 
+    <a href="/" class="alert-link">View the articles</a> for review.
+</div>
+
+<div id="loadingSpinner" class="text-center mt-4 d-none">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Running scraper, please wait...</p>
+</div>
+
+<div id="errorAlert" class="alert alert-danger mt-4 d-none">
+    <strong>Error:</strong> <span id="errorMessage"></span>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5>Current RSS Feeds</h5>
+    </div>
+    <div class="card-body">
+        <p>The following RSS feeds are currently configured:</p>
+        <ul>
+            <li><a href="https://www.thehindu.com/news/national/feeder/default.rss" target="_blank">The Hindu - National News</a></li>
+            <li><a href="https://timesofindia.indiatimes.com/rssfeeds/4719148.cms" target="_blank">Times of India - India News</a></li>
+            <li><a href="https://tamil.oneindia.com/rss/tamil-news.xml" target="_blank">OneIndia Tamil News</a></li>
+        </ul>
+        <p class="text-muted small">
+            To modify these feeds, edit the <code>rss_urls</code> list in <code>src/main.py</code>.
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('runScraperBtn').addEventListener('click', function() {
+        // Show loading spinner
+        document.getElementById('loadingSpinner').classList.remove('d-none');
+        document.getElementById('resultAlert').classList.add('d-none');
+        document.getElementById('errorAlert').classList.add('d-none');
+
+        // Call API to run scraper
+        fetch('/run-scraper', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading spinner
+            document.getElementById('loadingSpinner').classList.add('d-none');
+
+            if (data.status === 'success') {
+                // Show success alert
+                document.getElementById('resultAlert').classList.remove('d-none');
+            } else {
+                // Show error
+                document.getElementById('errorAlert').classList.remove('d-none');
+                document.getElementById('errorMessage').textContent = data.message || 'An error occurred';
+            }
+        })
+        .catch(error => {
+            // Hide loading spinner and show error
+            document.getElementById('loadingSpinner').classList.add('d-none');
+            document.getElementById('errorAlert').classList.remove('d-none');
+            document.getElementById('errorMessage').textContent = 'An error occurred while running the scraper';
+            console.error('Error:', error);
+        });
+    });
+</script>
+{% endblock %}

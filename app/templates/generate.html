@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Generate Podcast - Tamil Kids News Service{% endblock %}
+
+{% block content %}
+<h1 class="mb-4">Generate Podcast</h1>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Podcast Generation</h5>
+        <p class="card-text">
+            Generate a podcast script and audio file from approved articles.
+            The script will be saved to a text file that you can review and edit before final production.
+        </p>
+        <div class="alert alert-info">
+            <strong>Note:</strong> In this demo version, TTS functionality is not yet implemented.
+            You'll receive a script that you can use with external TTS tools.
+        </div>
+        <button id="generateBtn" class="btn btn-primary">Generate Podcast</button>
+    </div>
+</div>
+
+<div id="resultCard" class="card d-none">
+    <div class="card-header">
+        <h5>Generated Podcast</h5>
+    </div>
+    <div class="card-body">
+        <div id="scriptContainer" class="mb-4">
+            <h5>Podcast Script</h5>
+            <div class="card bg-light">
+                <div class="card-body">
+                    <pre id="scriptText" class="tamil-text" style="white-space: pre-wrap;"></pre>
+                </div>
+            </div>
+            <a id="downloadScriptBtn" href="#" class="btn btn-outline-primary mt-2">Download Script</a>
+        </div>
+
+        <div id="audioContainer" class="d-none">
+            <h5>Podcast Audio</h5>
+            <audio id="audioPlayer" controls class="w-100 mb-2"></audio>
+            <a id="downloadAudioBtn" href="#" class="btn btn-outline-primary">Download Audio</a>
+        </div>
+    </div>
+</div>
+
+<div id="loadingSpinner" class="text-center mt-4 d-none">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
+    </div>
+    <p class="mt-2">Generating podcast, please wait...</p>
+</div>
+
+<div id="errorAlert" class="alert alert-danger mt-4 d-none">
+    <strong>Error:</strong> <span id="errorMessage"></span>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.getElementById('generateBtn').addEventListener('click', function() {
+        // Show loading spinner
+        document.getElementById('loadingSpinner').classList.remove('d-none');
+        document.getElementById('resultCard').classList.add('d-none');
+        document.getElementById('errorAlert').classList.add('d-none');
+
+        // Call API to generate podcast
+        fetch('/generate-podcast', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Hide loading spinner
+            document.getElementById('loadingSpinner').classList.add('d-none');
+
+            if (data.status === 'success') {
+                // Show result card
+                document.getElementById('resultCard').classList.remove('d-none');
+
+                // Set script text
+                document.getElementById('scriptText').textContent = data.script;
+
+                // Setup script download
+                const scriptBlob = new Blob([data.script], { type: 'text/plain' });
+                const scriptUrl = URL.createObjectURL(scriptBlob);
+                const downloadScriptBtn = document.getElementById('downloadScriptBtn');
+                downloadScriptBtn.href = scriptUrl;
+                downloadScriptBtn.download = 'podcast_script.txt';
+
+                // Setup audio if available
+                if (data.audio_file) {
+                    document.getElementById('audioContainer').classList.remove('d-none');
+                    document.getElementById('audioPlayer').src = data.audio_file;
+
+                    const downloadAudioBtn = document.getElementById('downloadAudioBtn');
+                    downloadAudioBtn.href = data.audio_file;
+                    downloadAudioBtn.download = 'podcast.mp3';
+                } else {
+                    document.getElementById('audioContainer').classList.add('d-none');
+                }
+            } else {
+                // Show error
+                document.getElementById('errorAlert').classList.remove('d-none');
+                document.getElementById('errorMessage').textContent = data.message || 'An error occurred';
+            }
+        })
+        .catch(error => {
+            // Hide loading spinner and show error
+            document.getElementById('loadingSpinner').classList.add('d-none');
+            document.getElementById('errorAlert').classList.remove('d-none');
+            document.getElementById('errorMessage').textContent = 'An error occurred while generating the podcast';
+            console.error('Error:', error);
+        });
+    });
+</script>
+{% endblock %}
