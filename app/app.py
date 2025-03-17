@@ -3,6 +3,9 @@ import os
 import sys
 import json
 
+template_dir = os.path.abspath('app/templates')
+app = Flask(__name__, template_folder=template_dir)
+
 # Add parent directory to path so we can import from src
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -21,15 +24,18 @@ PODCAST_AUDIO_FILE = os.path.join(DATA_DIR, "podcast.mp3")
 # Ensure data directory exists
 ensure_dir_exists(DATA_DIR)
 
+
 @app.route('/')
 def index():
     """Main page showing all articles for review"""
     articles = load_json_file(PROCESSED_NEWS_FILE, [])
-    approved_count = sum(1 for article in articles if article.get('approved', False))
-    return render_template('index.html', 
-                          articles=articles, 
-                          total=len(articles),
-                          approved=approved_count)
+    approved_count = sum(1 for article in articles
+                         if article.get('approved', False))
+    return render_template('index.html',
+                           articles=articles,
+                           total=len(articles),
+                           approved=approved_count)
+
 
 @app.route('/view/<int:article_id>')
 def view_article(article_id):
@@ -39,9 +45,10 @@ def view_article(article_id):
     if article_id >= len(articles):
         return "Article not found", 404
 
-    return render_template('view.html', 
-                          article=articles[article_id], 
-                          article_id=article_id)
+    return render_template('view.html',
+                           article=articles[article_id],
+                           article_id=article_id)
+
 
 @app.route('/edit/<int:article_id>', methods=['GET', 'POST'])
 def edit_article(article_id):
@@ -54,7 +61,8 @@ def edit_article(article_id):
     if request.method == 'POST':
         # Update article with edited content
         articles[article_id]['tamil_title'] = request.form.get('tamil_title')
-        articles[article_id]['tamil_summary'] = request.form.get('tamil_summary')
+        articles[article_id]['tamil_summary'] = request.form.get(
+            'tamil_summary')
         articles[article_id]['edited'] = True
 
         # Save updated articles
@@ -62,9 +70,10 @@ def edit_article(article_id):
 
         return redirect(url_for('view_article', article_id=article_id))
 
-    return render_template('edit.html', 
-                          article=articles[article_id], 
-                          article_id=article_id)
+    return render_template('edit.html',
+                           article=articles[article_id],
+                           article_id=article_id)
+
 
 @app.route('/approve/<int:article_id>', methods=['POST'])
 def approve_article(article_id):
@@ -78,10 +87,13 @@ def approve_article(article_id):
     save_json_file(articles, PROCESSED_NEWS_FILE)
 
     # Get all approved articles and save to approved_news.json
-    approved_articles = [article for article in articles if article.get('approved', False)]
+    approved_articles = [
+        article for article in articles if article.get('approved', False)
+    ]
     save_json_file(approved_articles, APPROVED_NEWS_FILE)
 
     return jsonify({"status": "success"})
+
 
 @app.route('/reject/<int:article_id>', methods=['POST'])
 def reject_article(article_id):
@@ -96,16 +108,22 @@ def reject_article(article_id):
 
     return jsonify({"status": "success"})
 
+
 @app.route('/generate-podcast', methods=['GET', 'POST'])
 def generate_podcast():
     """Generate podcast from approved articles"""
     if request.method == 'POST':
         # Get all approved articles
         articles = load_json_file(PROCESSED_NEWS_FILE, [])
-        approved_articles = [article for article in articles if article.get('approved', False)]
+        approved_articles = [
+            article for article in articles if article.get('approved', False)
+        ]
 
         if not approved_articles:
-            return jsonify({"status": "error", "message": "No approved articles found"})
+            return jsonify({
+                "status": "error",
+                "message": "No approved articles found"
+            })
 
         # Generate podcast script
         script = generate_podcast_script(approved_articles)
@@ -118,7 +136,7 @@ def generate_podcast():
         audio_file = text_to_speech(script, PODCAST_AUDIO_FILE)
 
         result = {
-            "status": "success", 
+            "status": "success",
             "script": script,
             "script_file": PODCAST_SCRIPT_FILE
         }
@@ -131,6 +149,7 @@ def generate_podcast():
     # GET request - show generation page
     return render_template('generate.html')
 
+
 @app.route('/run-scraper', methods=['GET', 'POST'])
 def run_scraper():
     """Run the news scraper"""
@@ -139,12 +158,19 @@ def run_scraper():
             # Import and run the main function from src.main
             from src.main import main
             main()
-            return jsonify({"status": "success", "message": "Scraper ran successfully"})
+            return jsonify({
+                "status": "success",
+                "message": "Scraper ran successfully"
+            })
         except Exception as e:
-            return jsonify({"status": "error", "message": f"Error running scraper: {str(e)}"})
+            return jsonify({
+                "status": "error",
+                "message": f"Error running scraper: {str(e)}"
+            })
 
     # GET request - show scraper page
-    return render_template('scraper.html')
+    return render_template('scrapper.html')
+
 
 if __name__ == '__main__':
     # Check if we're running on Replit

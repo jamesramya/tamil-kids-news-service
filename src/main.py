@@ -1,8 +1,16 @@
 import os
 import json
 import datetime
-from utils import ensure_dir_exists
-from translation import detect_language, translate_to_tamil_fallback
+import sys
+
+# Fix import paths by getting the absolute path to the src directory
+current_dir = os.path.dirname(os.path.abspath(__file__))
+src_dir = current_dir
+sys.path.append(os.path.dirname(current_dir))  # Add parent directory to path
+
+# Now use the correct imports
+from src.utils import ensure_dir_exists
+from src.translation import detect_language, translate_to_tamil_fallback
 import feedparser
 
 def fetch_rss_articles(rss_url, num_articles=5, since_date=None):

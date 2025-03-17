@@ -1,6 +1,11 @@
 import os
 import re
 from html import unescape
+import sys
+
+# Fix import paths
+current_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.dirname(current_dir))  # Add parent directory to path
 
 def ensure_dir_exists(directory):
     """
