@@ -3,14 +3,13 @@ import json
 import datetime
 import sys
 
-# Fix import paths by getting the absolute path to the src directory
+# Fix import paths
 current_dir = os.path.dirname(os.path.abspath(__file__))
-src_dir = current_dir
 sys.path.append(os.path.dirname(current_dir))  # Add parent directory to path
 
 # Now use the correct imports
 from src.utils import ensure_dir_exists
-from src.translation import detect_language, translate_to_tamil_fallback
+from src.translation import detect_language
 import feedparser
 
 def fetch_rss_articles(rss_url, num_articles=5, since_date=None):
@@ -123,34 +122,28 @@ def process_news_for_kids(rss_url, num_articles=5, since_date=None):
             'published': article['published']
         }
 
-        # Detect title language
+        # Detect title language but don't translate yet
         title_lang = detect_language(article['title'])
         processed_article['title_language'] = title_lang
 
-        # Translate title if needed
-        if title_lang != "ta":
-            print(f"  Title language detected: {title_lang}")
-            print("  Translating title to Tamil...")
-            processed_article['tamil_title'] = translate_to_tamil_fallback(article['title'])
-        else:
-            processed_article['tamil_title'] = article['title']
-            print("  Title already in Tamil")
+        # Initially set Tamil title to same as original (will be translated later if needed)
+        processed_article['tamil_title'] = article['title']
 
-        # Detect and translate summary
+        # Detect summary language but don't translate yet
         if article['summary']:
             summary_lang = detect_language(article['summary'])
             processed_article['summary_language'] = summary_lang
-
-            if summary_lang != "ta":
-                print(f"  Summary language detected: {summary_lang}")
-                print("  Translating summary to Tamil...")
-                processed_article['tamil_summary'] = translate_to_tamil_fallback(article['summary'])
-            else:
-                processed_article['tamil_summary'] = article['summary']
-                print("  Summary already in Tamil")
+            processed_article['tamil_summary'] = article['summary']
         else:
             processed_article['tamil_summary'] = ""
             processed_article['summary_language'] = "unknown"
+
+        # Set needs_translation flag based on detected languages
+        processed_article['needs_translation'] = (
+            (title_lang != "ta" and title_lang != "unknown") or
+            (processed_article['summary_language'] != "ta" and 
+             processed_article['summary_language'] != "unknown")
+        )
 
         processed_articles.append(processed_article)
 
@@ -196,10 +189,9 @@ def main():
     # Print results
     print("\nProcessed News Articles:")
     for i, article in enumerate(all_processed_articles):
-        print(f"\n{i+1}. {article['tamil_title']}")
-        print(f"   Original: {article['original_title']}")
-        if 'tamil_summary' in article and article['tamil_summary']:
-            print(f"   Summary: {article['tamil_summary'][:100]}...")
+        print(f"\n{i+1}. {article['original_title']}")
+        print(f"   Language: {article['title_language']}")
+        print(f"   Needs Translation: {'Yes' if article['needs_translation'] else 'No'}")
 
 if __name__ == "__main__":
     main()

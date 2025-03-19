@@ -13,8 +13,7 @@
             The script will be saved to a text file that you can review and edit before final production.
         </p>
         <div class="alert alert-info">
-            <strong>Note:</strong> In this demo version, TTS functionality is not yet implemented.
-            You'll receive a script that you can use with external TTS tools.
+            <strong>Note:</strong> Audio is generated using OpenAI's text-to-speech with the 'Nova' voice.
         </div>
         <button id="generateBtn" class="btn btn-primary">Generate Podcast</button>
     </div>
@@ -92,11 +91,11 @@
                 // Setup audio if available
                 if (data.audio_file) {
                     document.getElementById('audioContainer').classList.remove('d-none');
-                    document.getElementById('audioPlayer').src = data.audio_file;
+                    document.getElementById('audioPlayer').src = data.audio_url;
 
                     const downloadAudioBtn = document.getElementById('downloadAudioBtn');
-                    downloadAudioBtn.href = data.audio_file;
-                    downloadAudioBtn.download = 'podcast.mp3';
+                    downloadAudioBtn.href = data.audio_url;
+                    downloadAudioBtn.download = data.audio_filename;
                 } else {
                     document.getElementById('audioContainer').classList.add('d-none');
                 }
